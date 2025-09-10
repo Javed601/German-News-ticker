@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deutsche Nachrichten</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0c0c0c 0%, #1a1a1a 100%);
+            color: #fff;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+        }
+
+        .main-container {
+            width: 100%;
+            height: 120px;
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+
+        .left-info-panel {
+            width: 250px;
+            height: 100%;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            border: 3px solid #0066cc;
+            border-right: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .time-widget {
+            text-align: center;
+            color: #fff;
+            margin-bottom: 10px;
+        }
+
+        .time-display {
+            font-size: 20px;
+            font-weight: bold;
+            color: #0066cc;
+            margin-bottom: 2px;
+        }
+
+        .date-display {
+            font-size: 14px;
+            color: #e0e0e0;
+            margin-bottom: 8px;
+        }
+
+        .live-indicator {
+            background: #ff0000;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 11px;
+            font-weight: bold;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.05); }
+        }
+
+        .ticker-container {
+            flex: 1;
+            height: 120px;
+            overflow: hidden;
+            position: relative;
+            background: linear-gradient(90deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%);
+            border-top: 3px solid #0066cc;
+            border-bottom: 3px solid #0066cc;
+            border-right: 3px solid #0066cc;
+        }
+
+        .ticker-content {
+            display: flex;
+            height: 100%;
+            align-items: center;
+            animation: scroll-left 180s linear infinite;
+            will-change: transform;
+        }
+
+        .news-item {
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            padding: 0 50px;
+            min-width: 700px;
+            height: 100%;
+            border-right: 2px solid #333;
+        }
+
+        .news-item:last-child {
+            border-right: none;
+        }
+
+        .news-thumbnail {
+            width: 85px;
+            height: 85px;
+            border-radius: 10px;
+            object-fit: cover;
+            margin-right: 20px;
+            border: 2px solid #0066cc;
+            background: linear-gradient(45deg, #333, #555);
+            box-shadow: 0 3px 8px rgba(0, 102, 204, 0.3);
+        }
+
+        .news-text {
+            flex: 1;
+            max-width: 600px;
+        }
+
+        .news-title {
+            color: #0066cc;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            line-height: 1.2;
+            display: -webkit-box;
+            -webkit-line-clamp: 1;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-shadow: 0 1px 3px rgba(0, 102, 204, 0.3);
+        }
+
+        .news-description {
+    line-height: 1.4;
+    max-height: calc(1.4em * 3);
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+            color: #e0e0e0;
+            font-size: 14px;
+            line-height: 1.3;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            height: 55px;
+        }
+
+        .news-source {
+            color: #888;
+            font-size: 11px;
+            margin-top: 4px;
+            font-style: italic;
+        }
+
+        @keyframes scroll-left {
+            0% {
+                transform: translateX(100%);
+            }
+            100% {
+                transform: translateX(-100%);
+            }
+        }
+
+        .loading {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-size: 18px;
+            color: #0066cc;
+        }
+
+        .loading-spinner {
+            width: 45px;
+            height: 45px;
+            border: 4px solid #333;
+            border-top: 4px solid #ff6600;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Brand colors updated to blue */
+        .custom-brand {
+            --brand-primary: #0066cc;
+            --brand-secondary: #0052a3;
+            --brand-accent: #fff;
+        }
+    </style>
+</head>
+<body class="custom-brand">
+    <div id="loading" class="loading">
+        <div class="loading-spinner"></div>
+    <div>Deutsche Nachrichten werden geladen...</div>
+    </div>
+
+    <div id="mainContainer" class="main-container" style="display: none;">
+        <div class="left-info-panel">
+            <div class="time-widget">
+                <div class="time-display" id="currentTime"></div>
+                <div class="date-display" id="currentDate"></div>
+                <div class="live-indicator">● LIVE</div>
+            </div>
+        </div>
+
+        <div class="ticker-container">
+            <div class="ticker-content" id="tickerContent">
+                <!-- News items will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // German news sources
+        const germanNewsSources = [
+            {
+                name: 'Tagesschau',
+                url: 'https://api.rss2json.com/v1/api.json?rss_url=https://www.tagesschau.de/xml/rss2/',
+                type: 'rss2json'
+            },
+            {
+                name: 'Spiegel',
+                url: 'https://api.rss2json.com/v1/api.json?rss_url=https://www.spiegel.de/schlagzeilen/index.rss',
+                type: 'rss2json'
+            },
+            {
+                name: 'Zeit',
+                url: 'https://api.rss2json.com/v1/api.json?rss_url=https://newsfeed.zeit.de/index',
+                type: 'rss2json'
+            },
+            {
+                name: 'Süddeutsche Zeitung',
+                url: 'https://api.rss2json.com/v1/api.json?rss_url=https://rss.sueddeutsche.de/rss/Alles',
+                type: 'rss2json'
+            },
+            {
+                name: 'FAZ',
+                url: 'https://api.rss2json.com/v1/api.json?rss_url=https://www.faz.net/rss/aktuell/',
+                type: 'rss2json'
+            }
+        ];
+
+        // Extended Dutch news content (30 items with thumbnails)
+        const dutchSampleNews = [
+            {
+                title: "Kabinet kondigt nieuwe klimaatmaatregelen aan voor 2025",
+                description: "De regering presenteert uitgebreide plannen voor verduurzaming van de Nederlandse economie. De nieuwe maatregelen omvatten investeringen in hernieuwbare energie en elektrificatie van het transport.",
+                source: "Nederlandse Regering",
+                time: "3 minuten geleden",
+                thumbnail: "/api/placeholder/85/85"
+            },
+            {
+                title: "Nederlandse universiteiten starten gezamenlijk AI-onderzoek",
+                description: "Academische instellingen bundelen krachten voor baanbrekend onderzoek naar kunstmatige intelligentie. Het project richt zich op ethische AI-ontwikkeling en maatschappelijke toepassingen.",
+                source: "Onderwijs Nieuws",
+                time: "18 minuten geleden",
+                thumbnail: "/api/placeholder/85/85"
+            },
+            {
+                title: "Nieuwe woonwijken gepland in Nederlandse steden",
+                description: "Gemeenten presenteren ambitieuze bouwplannen om de woningcrisis aan te pakken. De projecten combineren betaalbare woningen met duurzame stedelijke ontwikkeling.",
+                source: "Stedelijke Ontwikkeling",
+                time: "35 minuten geleden",
+                thumbnail: "/api/placeholder/85/85"
+            },
+            {
+                title: "Nederlands bedrijfsleven investeert in groene technologie",
+                description: "Grote ondernemingen kondigen miljardeinvesteringen aan in schone energie en circulaire economie. De investeringen zijn onderdeel van de nationale klimaatdoelstellingen.",
+                source: "Zakelijk Nederland",
+                time: "1 uur geleden",
+                thumbnail: "/api/placeholder/85/85"
+            },
+            {
+                title: "Innovatief zorgproject verbetert patiëntenzorg in Nederland",
+                description: "Ziekenhuizen implementeren nieuwe technologieën voor betere behandeling en patiëntbeleving. Het project toont veelbelovende resultaten in verschillende medische specialismen.",
+                source: "Zorg & Gezondheid",
+                time: "1 uur geleden",
+                thumbnail: "/api/placeholder/85/85"
+            },
+            {
+                title: "Nederlandse start-ups trekken internationale investeerders aan",
+                description: "Innovatieve bedrijven uit Nederland weten significant kapitaal op te halen voor verdere groei. De investeringen richten zich op technologie, duurzaamheid en gezondheidszorg.",
+                source: "Business News",
+                time: "2 uur geleden",
+                thumbnail: "/api/placeholder/85/85"
+            },
+            {
+                title: "Cultuursektor krijgt extra ondersteuning van de overheid",
+                description: "Nieuwe subsidieregelingen worden ingevoerd om Nederlandse kunst en cultuur te stimuleren. Het programma ondersteunt zowel traditionele als digitale culturele initiatieven.",
+                source: "Cultuur & Media",
+                time: "2 uur geleden",
+                thumbnail: "/api/placeholder/85/85"
+            },
+            {
+                title: "Nederlandse havens moderniseren voor duurzame logistiek",
+                description: "Grote investeringen in haveninfrastructuur maken Nederland tot een groenere logistieke hub. De projecten omvatten elektrificatie en automatisering van vrachtafhandeling.",
+                source: "Transport & Logistiek",
+                time: "3 uur geleden",
+                thumbnail: "/api/placeholder/85/85"
+            },
+            {
+                title: "Onderwijs krijgt digitale vernieuwing in Nederlandse scholen",
+                description: "Scholen implementeren nieuwe technologieën voor interactief leren en digitale vaardigheden. Het programma bereidt studenten voor op de toekomstige arbeidsmarkt.",
+                source: "Onderwijs Update",
+                time: "3 uur geleden",
+                thumbnail: "/api/placeholder/85/85"
+            },
+            {
+                title: "Nederlandse voedselindustrie zet in op duurzame productie",
+                description: "Voedselproducenten ontwikkelen innovatieve methoden voor milieuvriendelijke productie. De initiatieven richten zich op vermindering van voedselverspilling en CO2-uitstoot.",
+                source: "Voedsel & Landbouw",
+                time: "4 uur geleden",
+                thumbnail: "/api/placeholder/85/85"
+            },
+            {
+                title: "Technische innovaties verbeteren Nederlandse infrastructuur",
+                description: "Wegenbouw en openbaar vervoer profiteren van slimme technologieën en data-analyse. De verbeteringen zorgen voor veiligere en efficiëntere mobiliteit voor alle Nederlanders.",
+                source: "Infrastructuur Nieuws",
+                time: "4 uur geleden",
+                thumbnail: "/api/placeholder/85/85"
+            },
+            {
+                title: "Nederlandse energie-cooperaties groeien snel",
+                description: "Lokale gemeenschappen starten eigen duurzame energieprojecten met zonnepanelen en windmolens. Deze initiatieven verlagen energiekosten en versterken de lokale economie.",
+                source: "Energie Transitie",
+                time: "5 uur geleden",
+                thumbnail: "/api/placeholder/85/85"
+            },
+            {
+                title: "Digitale overheid versnelt dienstverlening aan burgers",
+                description: "Gemeenten en ministeries introduceren gebruiksvriendelijke online platformen. Burgers kunnen steeds meer zaken digitaal regelen, wat tijd bespaart en de service verbetert.",
+                source: "Digitale Overheid",
+                time: "5 uur geleden",
+                thumbnail: "/api/placeholder/85/85"
+            },
+            {
+                title: "Nederlandse waterbeheersing als wereldwijd voorbeeld",
+                description: "Innovatieve dijkversterkingen en slimme waterbeheersystemen beschermen Nederland tegen klimaatverandering. Internationale delegaties bezoeken Nederlandse waterbouwprojecten.",
+                source: "Water Management",
+                time: "6 uur geleden",
+                thumbnail: "/api/placeholder/85/85"
+            },
+            {
+                title: "Circulaire economie krijgt boost in Nederlandse industrie",
+                description: "Bedrijven ontwikkelen nieuwe manieren om afval te hergebruiken en grondstoffen te recyclen. Deze aanpak vermindert milieubelasting en creëert nieuwe banen.",
+                source: "Circulaire Economie",
+                time: "6 uur geleden",
+                thumbnail: "/api/placeholder/85/85"
+            },
+            {
+                title: "Nederlandse sportfaciliteiten worden duurzamer gemaakt",
+                description: "Sportclubs en gemeenten investeren in energiebesparende maatregelen voor sporthallen en zwembaden. LED-verlichting en warmtepompen verlagen de operationele kosten aanzienlijk.",
+                source: "Sport & Recreatie",
+                time: "7 uur geleden",
+                thumbnail: "/api/placeholder/85/85"
+            },
+            {
+                title: "Sociale werkvoorzieningen krijgen nieuwe kansen",
+                description: "Mensen met een arbeidsbeperking vinden werk in groeiende sectoren zoals groenonderhoud en recycling. Werkgevers waarderen de betrokkenheid en kwaliteit van deze medewerkers.",
+                source: "Sociale Participatie",
+                time: "7 uur geleden",
+                thumbnail: "/api/placeholder/85/85"
+            },
+            {
+                title: "Nederlandse designsector bloeit op internationale markten",
+                description: "Creatieve bedrijven uit Nederland winnen prestigieuze awards en contracten wereldwijd. De combinatie van functionaliteit en esthetiek maakt Dutch Design zeer gewild.",
+                source: "Design & Creatie",
+                time: "8 uur geleden",
+                thumbnail: "/api/placeholder/85/85"
+            },
+            {
+                title: "Lokale markten stimuleren Nederlandse gemeenschappen",
+                description: "Boerenmarkten en lokale ondernemers versterken de sociale cohesie in wijken en dorpen. Bewoners waarderen de korte lijnen en persoonlijke service van lokale handel.",
+                source: "Lokale Economie",
+                time: "8 uur geleden",
+                thumbnail: "/api/placeholder/85/85"
+            },
+            {
+                title: "Nederlandse research leidt tot medische doorbraken",
+                description: "Wetenschappers ontwikkelen nieuwe behandelmethoden voor chronische ziekten. De samenwerking tussen universiteiten en ziekenhuizen levert veelbelovende resultaten op.",
+                source: "Medisch Onderzoek",
+                time: "9 uur geleden",
+                thumbnail: "/api/placeholder/85/85"
+            },
+            {
+                title: "Duurzame mobiliteit wint terrein in Nederlandse steden",
+                description: "Elektrische bussen en deelfietsen maken openbaar vervoer schoner en toegankelijker. Steden investeren in laadpalen en fietsinfrastructuur voor de toekomst.",
+                source: "Mobiliteit Nederland",
+                time: "9 uur geleden",
+                thumbnail: "/api/placeholder/85/85"
+            },
+            {
+                title: "Nederlandse agricultuur innovatief en duurzaam",
+                description: "Boeren implementeren precisie-landbouw en verticale teelt voor hogere opbrengsten. Slimme sensoren en data-analyse optimaliseren gewasgroei en waterverbruik.",
+                source: "Agri-Innovatie",
+                time: "10 uur geleden",
+                thumbnail: "/api/placeholder/85/85"
+            },
+            {
+                title: "Cybersecurity wordt prioriteit voor Nederlandse bedrijven",
+                description: "Organisaties investeren massaal in digitale beveiliging tegen ransomware en hacking. Nieuwe trainingen helpen medewerkers cyberrisico's herkennen en voorkomen.",
+                source: "Cyber Security NL",
+                time: "10 uur geleden",
+                thumbnail: "/api/placeholder/85/85"
+            },
+            {
+                title: "Nederlandse marine versterkt internationale samenwerking",
+                description: "Gezamenlijke oefeningen met NAVO-partners verbeteren maritieme veiligheid. De marine speelt actieve rol in vredesmissies en humanitaire operaties wereldwijd.",
+                source: "Defensie Nieuws",
+                time: "11 uur geleden",
+                thumbnail: "/api/placeholder/85/85"
+            },
+            {
+                title: "Toerisme-industrie herstelt zich met duurzame initiatieven",
+                description: "Hotels en attracties introduceren milieuvriendelijke maatregelen om bezoekers te trekken. Lokale partners bieden authentieke ervaringen die gemeenschappen ten goede komen.",
+                source: "Toerisme Nederland",
+                time: "11 uur geleden",
+                thumbnail: "/api/placeholder/85/85"
+            },
+            {
+                title: "Nederlandse financiële sector omarmt blockchain technologie",
+                description: "Banken en verzekeraars testen gedistribueerde database-systemen voor veiligere transacties. De innovatie kan kosten verlagen en transparantie verhogen.",
+                source: "FinTech Nederland",
+                time: "12 uur geleden",
+                thumbnail: "/api/placeholder/85/85"
+            },
+            {
+                title: "Gemeenschapsinitiatieven versterken lokale democratie",
+                description: "Burgerparticipatie neemt toe door digitale platforms en buurtbijeenkomsten. Inwoners krijgen meer inspraak in besluitvorming over hun leefomgeving.",
+                source: "Lokale Democratie",
+                time: "12 uur geleden",
+                thumbnail: "/api/placeholder/85/85"
+            },
+            {
+                title: "Nederlandse mode-industrie wordt circulair en eerlijk",
+                description: "Kledingmerken investeren in recyclebare materialen en eerlijke arbeidsomstandigheden. Consumenten waarderen transparantie over productieprocessen en duurzaamheid.",
+                source: "Duurzame Mode",
+                time: "13 uur geleden",
+                thumbnail: "/api/placeholder/85/85"
+            },
+            {
+                title: "Wetenschapsparks stimuleren innovatie en ondernemerschap",
+                description: "Universiteitscampussen huisvesten start-ups en onderzoeksinstituten onder één dak. De samenwerking versnelt de ontwikkeling van nieuwe technologieën en toepassingen.",
+                source: "Innovatie Nederland",
+                time: "13 uur geleden",
+                thumbnail: "/api/placeholder/85/85"
+            },
+            {
+                title: "Nederlandse kunst bereikt nieuwe internationale hoogtepunten",
+                description: "Musea en galeries presenteren baanbrekende tentoonstellingen die wereldwijd aandacht trekken. Jonge kunstenaars vinden via digitale platforms steeds meer erkenning.",
+                source: "Kunst & Cultuur",
+                time: "14 uur geleden",
+                thumbnail: "/api/placeholder/85/85"
+            }
+        ];
+
+        // German fallback news
+        const germanSampleNews = [
+            {
+                title: "Bundesregierung beschließt neues Klimapaket",
+                description: "Die Bundesregierung hat heute ein umfassendes Maßnahmenpaket zum Klimaschutz verabschiedet. Ziel ist es, die CO2-Emissionen bis 2030 deutlich zu senken.",
+                source: "Tagesschau",
+                time: "Vor 5 Minuten",
+                thumbnail: "https://www.tagesschau.de/multimedia/bilder/klimapaket-101~_v-videowebl.jpg"
+            },
+            {
+                title: "Deutsche Wirtschaft wächst stärker als erwartet",
+                description: "Im zweiten Quartal ist die deutsche Wirtschaft um 1,2 Prozent gewachsen. Experten hatten mit einem geringeren Anstieg gerechnet.",
+                source: "Spiegel",
+                time: "Vor 12 Minuten",
+                thumbnail: "https://www.spiegel.de/images/image-1234567.jpg"
+            },
+            {
+                title: "Neue Corona-Regeln treten bundesweit in Kraft",
+                description: "Ab heute gelten in ganz Deutschland neue Regeln zur Eindämmung der Corona-Pandemie. Die wichtigsten Änderungen im Überblick.",
+                source: "Zeit Online",
+                time: "Vor 20 Minuten",
+                thumbnail: "https://www.zeit.de/images/corona-regeln-2025.jpg"
+            },
+            {
+                title: "FC Dortmund gewinnt das Pokalfinale",
+                description: "Der FC Dortmund hat das diesjährige Pokalfinale mit 2:1 gegen München gewonnen. Die Fans feiern ausgelassen.",
+                source: "Süddeutsche Zeitung",
+                time: "Vor 30 Minuten",
+                thumbnail: "https://www.sueddeutsche.de/image/dortmund-pokal.jpg"
+            },
+            {
+                title: "Innovationen in der deutschen Autoindustrie",
+                description: "Deutsche Autobauer setzen verstärkt auf Elektromobilität und autonomes Fahren. Neue Modelle werden auf der IAA vorgestellt.",
+                source: "FAZ",
+                time: "Vor 1 Stunde",
+                thumbnail: "https://www.faz.net/image/auto-innovation.jpg"
+            }
+        ];
+
+        let currentNews = [];
+    let newsSource = 'Sample Data';
+
+        function updateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('de-DE', {
+                hour12: false,
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            const dateString = now.toLocaleDateString('de-DE', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric'
+            });
+            document.getElementById('currentTime').textContent = timeString;
+            document.getElementById('currentDate').textContent = dateString;
+        }
+
+        function truncateText(text, maxLength) {
+            if (!text) return '';
+            const cleanText = text.replace(/<[^>]*>/g, '').replace(/&[^;]+;/g, ' ').trim();
+            if (cleanText.length <= maxLength) return cleanText;
+            return cleanText.substring(0, maxLength).trim() + '...';
+        }
+
+        function extractThumbnailFromDescription(description) {
+            if (!description) return null;
+            
+            const imgMatches = [
+                /<img[^>]+src="([^"]+)"/i,
+                /<img[^>]+src='([^']+)'/i,
+                /https?:\/\/[^\s"'<>]+\.(?:jpg|jpeg|png|gif|webp|svg)/i
+            ];
+            
+            for (const pattern of imgMatches) {
+                const match = description.match(pattern);
+                if (match && match[1]) {
+                    return match[1];
+                }
+            }
+            
+            return null;
+        }
+
+        function createNewsItem(item, index) {
+            const newsItem = document.createElement('div');
+            newsItem.className = 'news-item';
+
+            const title = item.title || `Nieuws ${index + 1}`;
+            const description = truncateText(item.description || item.content || '', 300);
+
+            // Always prefer rss2json thumbnail if present and valid
+            let imageUrl = (item.thumbnail && item.thumbnail.startsWith('http'))
+                ? item.thumbnail
+                : (item.image || item.enclosure?.link || extractThumbnailFromDescription(item.description) || `/api/placeholder/85/85`);
+
+            const source = item.source || newsSource;
+            const timeStamp = item.time || formatTime(item.pubDate) || 'Nu';
+
+            newsItem.innerHTML = `
+                <img src="${imageUrl}" alt="Nieuws afbeelding" class="news-thumbnail" 
+                     onerror="this.src='/api/placeholder/85/85'">
+                <div class="news-text">
+                    <div class="news-title">${title}</div>
+                    <div class="news-description">${description}</div>
+                    <div class="news-source">${source} • ${timeStamp}</div>
+                </div>
+            `;
+
+            return newsItem;
+        }
+
+        function formatTime(dateString) {
+            if (!dateString) return null;
+            try {
+                const date = new Date(dateString);
+                const now = new Date();
+                const diffMinutes = Math.floor((now - date) / (1000 * 60));
+                if (diffMinutes < 1) return 'Jetzt';
+                if (diffMinutes < 60) return `${diffMinutes} Min. ago`;
+                if (diffMinutes < 1440) return `${Math.floor(diffMinutes/60)} Std. ago`;
+                return date.toLocaleDateString('de-DE');
+            } catch (e) {
+                return 'Kürzlich';
+            }
+        }
+
+        function parseXMLFeed(xmlText, sourceName) {
+            try {
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+                const items = xmlDoc.querySelectorAll('item');
+                const newsItems = [];
+                for (let i = 0; i < Math.min(items.length, 30); i++) {
+                    const item = items[i];
+                    const title = item.querySelector('title')?.textContent?.trim();
+                    const description = item.querySelector('description')?.textContent?.trim();
+                    const pubDate = item.querySelector('pubDate')?.textContent?.trim();
+                    // Improved thumbnail extraction, now also from <content:encoded>
+                    let thumbnail = null;
+                    const enclosure = item.querySelector('enclosure');
+                    if (enclosure && enclosure.getAttribute('url')) {
+                        thumbnail = enclosure.getAttribute('url');
+                    } else {
+                        const mediaContent = item.getElementsByTagName('media:content')[0];
+                        if (mediaContent && mediaContent.getAttribute('url')) {
+                            thumbnail = mediaContent.getAttribute('url');
+                        } else {
+                            const mediaThumb = item.getElementsByTagName('media:thumbnail')[0];
+                            if (mediaThumb && mediaThumb.getAttribute('url')) {
+                                thumbnail = mediaThumb.getAttribute('url');
+                            } else {
+                                // Try <content:encoded>
+                                const contentEncoded = item.getElementsByTagName('content:encoded')[0];
+                                let contentHtml = contentEncoded ? contentEncoded.textContent : null;
+                                if (contentHtml) {
+                                    // Extract first <img src="...">
+                                    const imgMatch = contentHtml.match(/<img[^>]+src=['"]([^'"]+)['"]/i);
+                                    if (imgMatch && imgMatch[1]) {
+                                        thumbnail = imgMatch[1];
+                                    } else {
+                                        thumbnail = extractThumbnailFromDescription(description);
+                                    }
+                                } else {
+                                    thumbnail = extractThumbnailFromDescription(description);
+                                }
+                            }
+                        }
+                    }
+                    if (title) {
+                        newsItems.push({
+                            title: title,
+                            description: description,
+                            pubDate: pubDate,
+                            thumbnail: thumbnail,
+                            source: sourceName,
+                            time: formatTime(pubDate)
+                        });
+                    }
+                }
+                return newsItems;
+            } catch (error) {
+                console.error('XML parsing error:', error);
+                return [];
+            }
+        }
+
+        function isFromToday(dateString) {
+            if (!dateString) return false;
+            try {
+                const date = new Date(dateString);
+                const today = new Date();
+                return date.toDateString() === today.toDateString();
+            } catch (e) {
+                return false;
+            }
+        }
+
+        async function tryLoadGermanNews() {
+            let allNewsItems = [];
+            for (const source of germanNewsSources) {
+                try {
+                    console.log(`Versuche zu laden von ${source.name}...`);
+                    const response = await fetch(source.url);
+                    if (!response.ok) continue;
+                    let newsItems = [];
+                    if (source.type === 'rss2json') {
+                        const data = await response.json();
+                        if (data.items && data.items.length > 0) {
+                            newsItems = data.items.slice(0, 30).map(item => ({
+                                title: item.title,
+                                description: item.description,
+                                // Always use thumbnail from rss2json if present and valid
+                                thumbnail: (item.thumbnail && item.thumbnail.startsWith('http')) ? item.thumbnail : (item.enclosure?.link || extractThumbnailFromDescription(item.description)),
+                                pubDate: item.pubDate,
+                                source: source.name,
+                                time: formatTime(item.pubDate),
+                                isToday: isFromToday(item.pubDate)
+                            }));
+                        }
+                    } else if (source.type === 'xml') {
+                        const xmlText = await response.text();
+                        newsItems = parseXMLFeed(xmlText, source.name);
+                        newsItems = newsItems.map(item => ({
+                            ...item,
+                            isToday: isFromToday(item.pubDate)
+                        }));
+                    }
+                    if (newsItems.length > 0) {
+                        allNewsItems = allNewsItems.concat(newsItems);
+                        console.log(`Geladen: ${newsItems.length} Artikel von ${source.name}`);
+                    }
+                } catch (error) {
+                    console.log(`Fehler beim Laden von ${source.name}:`, error.message);
+                }
+            }
+            if (allNewsItems.length > 0) {
+                allNewsItems.sort((a, b) => {
+                    if (a.isToday && !b.isToday) return -1;
+                    if (!a.isToday && b.isToday) return 1;
+                    return new Date(b.pubDate || 0) - new Date(a.pubDate || 0);
+                });
+                currentNews = allNewsItems.slice(0, 25);
+                newsSource = 'Live Feeds';
+                console.log(`Erfolgreich ${currentNews.length} Nachrichtenartikel aus mehreren Quellen geladen`);
+                return true;
+            }
+            return false;
+        }
+
+        function displayNews(newsItems) {
+            const tickerContent = document.getElementById('tickerContent');
+            const loading = document.getElementById('loading');
+            const mainContainer = document.getElementById('mainContainer');
+            
+            tickerContent.innerHTML = '';
+            
+            // Ensure we have enough items for continuous scrolling
+            const itemsToShow = newsItems.length >= 15 ? newsItems : [...newsItems, ...newsItems];
+            
+            itemsToShow.forEach((item, index) => {
+                const newsElement = createNewsItem(item, index);
+                tickerContent.appendChild(newsElement);
+            });
+            
+            loading.style.display = 'none';
+            mainContainer.style.display = 'flex';
+            
+            console.log(`Displaying ${itemsToShow.length} Dutch news items from ${newsSource}`);
+        }
+
+        async function loadNews() {
+            const realNewsLoaded = await tryLoadGermanNews();
+            if (!realNewsLoaded) {
+                console.log('Keine Live-Nachrichten verfügbar. Zeige Beispielnachrichten.');
+                currentNews = germanSampleNews;
+                newsSource = 'Demo Data';
+            }
+            displayNews(currentNews);
+        }
+
+    // No German sample times needed
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('Starte deutschen Newsticker...');
+            updateTime();
+            setInterval(updateTime, 1000);
+            setTimeout(() => {
+                loadNews();
+            }, 1500);
+            // Refresh every 5 minutes for German news
+            setInterval(() => {
+                console.log('Aktualisiere deutsche Nachrichten...');
+                loadNews();
+            }, 5 * 60 * 1000);
+            // Pause animation on hover
+            const mainContainer = document.getElementById('mainContainer');
+            mainContainer.addEventListener('mouseenter', () => {
+                document.getElementById('tickerContent').style.animationPlayState = 'paused';
+            });
+            mainContainer.addEventListener('mouseleave', () => {
+                document.getElementById('tickerContent').style.animationPlayState = 'running';
+            });
+        });
+    </script>
+</body>
+</html>
